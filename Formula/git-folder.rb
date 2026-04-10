@@ -11,8 +11,11 @@ class GitFolder < Formula
   depends_on "go" => :build
 
   def install
-    git_version = Utils.safe_popen_read("git", "describe", "--tags", "--always", "--dirty").chomp
-    git_version = "main" if git_version.empty?
+    git_version = if build.head?
+      Utils.safe_popen_read("git", "describe", "--tags", "--always", "--dirty").chomp.then { |v| v.empty? ? "main" : v }
+    else
+      version.to_s
+    end
     ldflags = "-s -w -X main.version=#{git_version}"
     system "go", "build", *std_go_args(ldflags: ldflags), "./cmd/git-folder"
     man1.install "git-folder.1"
